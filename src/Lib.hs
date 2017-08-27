@@ -12,18 +12,18 @@ newtype Count = Count { getCount :: Integer }
 data Color = White | Red
   deriving (Show, Eq)
 
-type Channel = ()
+class Channel a
 
 -- The state of a Process.
-data ProcessState a where
-        ProcessState  :: (ProcessId a) =>
-                         { selfId        :: a         -- The proccess id of the process currently running.
-                         , selfColor     :: Color     -- The current color of the process.
-                         , opCount       :: Count     -- The number of operations that have been executed on this process.
-                         , snapshotCount :: Count     -- The number of snapshots that this process has been involved in.
-                         , inChannels    :: [Channel] -- All incoming channels to this process.
-                         , outchannels   :: [Channel] -- All outgoing channels from this process.
-                         } -> ProcessState a
+data ProcessState a b where
+        ProcessState  :: (ProcessId a, Channel b) =>
+                         { selfId        :: a     -- The proccess id of the process currently running.
+                         , selfColor     :: Color -- The current color of the process.
+                         , opCount       :: Count -- The number of operations that have been executed on this process.
+                         , snapshotCount :: Count -- The number of snapshots that this process has been involved in.
+                         , inChannels    :: [b]   -- All incoming channels to this process.
+                         , outchannels   :: [b]   -- All outgoing channels from this process.
+                         } -> ProcessState a b
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
