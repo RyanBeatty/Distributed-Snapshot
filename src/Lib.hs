@@ -19,7 +19,7 @@ class Channel a
 -- The state of a Process.
 data ProcessState a b where
         ProcessState  :: (ProcessId a, Channel b) =>
-                         { selfId        :: a     -- The proccess id of the process currently running.
+                         { idColor       :: a     -- The color that uniquely identifies the process.
                          , localColor    :: a     -- The current color of the process.
                          , opCount       :: Count -- The number of operations that have been executed on this process.
                          , snapshotCount :: Count -- The number of snapshots that this process has been involved in.
