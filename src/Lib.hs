@@ -16,20 +16,33 @@ class ProcessId a where
 newtype Count = Count { getCount :: Integer }
   deriving (Show, Eq)
 
-class Channel a
+class Channel a where
+--        makeChan :: ()
+--        sendTo :: a -> ()
+--        receiveFrom :: a -> ()
+
+data Message = Message
+
+data Letter a where
+        Letter :: (Channel a) =>
+                { recipientOf :: a
+                , msg :: Message 
+                } -> Letter a
+
+
 
 -- The state of a Process.
 data ProcessState a b where
         ProcessState  :: (ProcessId a, Channel b) =>
-                         { idColor       :: a     -- The color that uniquely identifies the process.
-                         , localColor    :: a     -- The current color of the process.
-                         , opCount       :: Count -- The number of operations that have been executed on this process.
-                         , snapshotCount :: Count -- The number of snapshots that this process has been involved in.
-                         , inChannels    :: [b]   -- All incoming channels to this process.
-                         , outchannels   :: [b]   -- All outgoing channels from this process.
-                         , warningRecSet :: S.Set b -- Set of channels that have sent a warning to this process.
-                         , idBorderSet   :: S.Set a -- Set of process ids that belong to neighboring master initiator processes.
-                         } -> ProcessState a b
+                { idColor       :: a     -- The color that uniquely identifies the process.
+                , localColor    :: a     -- The current color of the process.
+                , opCount       :: Count -- The number of operations that have been executed on this process.
+                , snapshotCount :: Count -- The number of snapshots that this process has been involved in.
+                , inChannels    :: [b]   -- All incoming channels to this process.
+                , outchannels   :: [b]   -- All outgoing channels from this process.
+                , warningRecSet :: S.Set b -- Set of channels that have sent a warning to this process.
+                , idBorderSet   :: S.Set a -- Set of process ids that belong to neighboring master initiator processes.
+                } -> ProcessState a b
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
