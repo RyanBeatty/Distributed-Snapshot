@@ -3,6 +3,8 @@ module Lib
     ( someFunc
     ) where
 
+import qualified Data.Set as S
+
 -- Interface for the 'Color' abstraction that Spezialleti and Kearns
 -- describes in their paper. Here the 'White' process id acts as a sentinal
 -- process id.
@@ -25,6 +27,8 @@ data ProcessState a b where
                          , snapshotCount :: Count -- The number of snapshots that this process has been involved in.
                          , inChannels    :: [b]   -- All incoming channels to this process.
                          , outchannels   :: [b]   -- All outgoing channels from this process.
+                         , warningRecSet :: S.Set b -- Set of channels that have sent a warning to this process.
+                         , idBorderSet   :: S.Set a -- Set of process ids that belong to neighboring master initiator processes.
                          } -> ProcessState a b
 
 someFunc :: IO ()
