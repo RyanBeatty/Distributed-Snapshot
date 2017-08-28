@@ -17,9 +17,9 @@ newtype Count = Count { getCount :: Integer }
   deriving (Show, Eq)
 
 class Channel a where
---        makeChan :: ()
---        sendTo :: a -> ()
---        receiveFrom :: a -> ()
+        makeChan :: a
+        sendTo :: a -> ()
+        receiveFrom :: a -> ()
 
 data Message = Message
 
