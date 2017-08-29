@@ -1,5 +1,4 @@
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE StandaloneDeriving #-}
 module Lib where
 
 import qualified Data.Set as S
@@ -29,28 +28,27 @@ data ProcessConfig = ProcessConfig
 
 -- A Letter contains a Message to send and the necessary info to be able to
 -- actually send the message to a process.
-data Letter a where
-        Letter :: (Channel a) =>
-                { recipientOf :: a -- The channel to send the message across.
-                , msg :: Message   -- The message payload.
-                } -> Letter a
-deriving instance (Show a) => Show (Letter a)
-deriving instance (Eq a) => Eq (Letter a)
+-- Type Parameters:
+-- Channel a
+data Letter a = Letter { recipientOf :: a -- The channel to send the message across.
+                       , msg :: Message   -- The message payload.
+                       }
+  deriving (Show, Eq)
 
 -- The state of a Process.
-data ProcessState a b where
-        ProcessState  :: (ProcessId a, Channel b) =>
-                { idColor       :: a     -- The color that uniquely identifies the process.
-                , localColor    :: a     -- The current color of the process.
-                , opCount       :: Count -- The number of operations that have been executed on this process.
-                , snapshotCount :: Count -- The number of snapshots that this process has been involved in.
-                , inChannels    :: [b]   -- All incoming channels to this process.
-                , outchannels   :: [b]   -- All outgoing channels from this process.
-                , warningRecSet :: S.Set b -- Set of channels that have sent a warning to this process.
-                , idBorderSet   :: S.Set a -- Set of process ids that belong to neighboring master initiator processes.
-                } -> ProcessState a b
-deriving instance (Show a, Show b) => Show (ProcessState a b)
-deriving instance (Eq a, Eq b) => Eq (ProcessState a b)
+-- Type Parameters:
+-- ProcessId a
+-- Channel b
+data ProcessState a b = ProcessState { idColor       :: a     -- The color that uniquely identifies the process.
+                                     , localColor    :: a     -- The current color of the process.
+                                     , opCount       :: Count -- The number of operations that have been executed on this process.
+                                     , snapshotCount :: Count -- The number of snapshots that this process has been involved in.
+                                     , inChannels    :: [b]   -- All incoming channels to this process.
+                                     , outchannels   :: [b]   -- All outgoing channels from this process.
+                                     , warningRecSet :: S.Set b -- Set of channels that have sent a warning to this process.
+                                     , idBorderSet   :: S.Set a -- Set of process ids that belong to neighboring master initiator processes.
+                                     }
+  deriving (Show, Eq)
 
 newtype ProcessAction a b c = ProcessAction { runAction :: RWS ProcessConfig [Letter b] (ProcessState a b) c }
 
