@@ -24,6 +24,8 @@ class Channel a where
 
 data Message = Message
 
+data ProcessConfig = ProcessConfig
+
 -- A Letter contains a Message to send and the necessary info to be able to
 -- actually send the message to a process.
 data Letter a where
@@ -45,8 +47,10 @@ data ProcessState a b where
                 , idBorderSet   :: S.Set a -- Set of process ids that belong to neighboring master initiator processes.
                 } -> ProcessState a b
 
-newtype ProcessAction a b c = ProcessAction { runAction :: RWS () [Letter b] (ProcessState a b) c }
+newtype ProcessAction a b c = ProcessAction { runAction :: RWS ProcessConfig [Letter b] (ProcessState a b) c }
 
+msgHandler :: Letter b -> ProcessAction a b ()
+msgHandler = undefined
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
