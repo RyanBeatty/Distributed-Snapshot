@@ -1,4 +1,5 @@
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE StandaloneDeriving #-}
 module Lib where
 
 import qualified Data.Set as S
@@ -33,6 +34,8 @@ data Letter a where
                 { recipientOf :: a -- The channel to send the message across.
                 , msg :: Message   -- The message payload.
                 } -> Letter a
+deriving instance (Show a) => Show (Letter a)
+deriving instance (Eq a) => Eq (Letter a)
 
 -- The state of a Process.
 data ProcessState a b where
