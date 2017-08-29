@@ -4,6 +4,7 @@ module Lib
     ) where
 
 import qualified Data.Set as S
+import Control.Monad.RWS.Lazy (RWS)
 
 -- Interface for the 'Color' abstraction that Spezialleti and Kearns
 -- describes in their paper. Here the 'White' process id acts as a sentinal
@@ -23,13 +24,13 @@ class Channel a where
 
 data Message = Message
 
+-- A Letter contains a Message to send and the necessary info to be able to
+-- actually send the message to a process.
 data Letter a where
         Letter :: (Channel a) =>
-                { recipientOf :: a
-                , msg :: Message 
+                { recipientOf :: a -- The channel to send the message across.
+                , msg :: Message   -- The message payload.
                 } -> Letter a
-
-
 
 -- The state of a Process.
 data ProcessState a b where
@@ -43,6 +44,9 @@ data ProcessState a b where
                 , warningRecSet :: S.Set b -- Set of channels that have sent a warning to this process.
                 , idBorderSet   :: S.Set a -- Set of process ids that belong to neighboring master initiator processes.
                 } -> ProcessState a b
+
+newtype ProcessAction a b c = ProcessAction { runAction :: RWS () [Letter b] (ProcessState a b) c }
+
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
