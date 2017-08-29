@@ -1,7 +1,5 @@
 {-# LANGUAGE GADTs #-}
-module Lib
-    ( someFunc
-    ) where
+module Lib where
 
 import qualified Data.Set as S
 import Control.Monad.RWS.Lazy (RWS)
@@ -23,8 +21,10 @@ class Channel a where
         receiveFrom :: a -> ()
 
 data Message = Message
+  deriving (Show, Eq)
 
 data ProcessConfig = ProcessConfig
+  deriving (Show, Eq)
 
 -- A Letter contains a Message to send and the necessary info to be able to
 -- actually send the message to a process.
