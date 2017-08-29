@@ -49,6 +49,8 @@ data ProcessState a b where
                 , warningRecSet :: S.Set b -- Set of channels that have sent a warning to this process.
                 , idBorderSet   :: S.Set a -- Set of process ids that belong to neighboring master initiator processes.
                 } -> ProcessState a b
+deriving instance (Show a, Show b) => Show (ProcessState a b)
+deriving instance (Eq a, Eq b) => Eq (ProcessState a b)
 
 newtype ProcessAction a b c = ProcessAction { runAction :: RWS ProcessConfig [Letter b] (ProcessState a b) c }
 
