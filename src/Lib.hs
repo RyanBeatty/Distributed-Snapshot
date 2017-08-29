@@ -20,7 +20,13 @@ class Channel a where
         sendTo :: a -> ()
         receiveFrom :: a -> ()
 
-data Message = Message
+-- Type Parameters:
+-- ProcessId a
+data Message a =
+  -- A warning message is sent to alert processes that a snapshot has begun.
+  WarningMsg { warningColor :: a -- The color of the initiator of the current snapshot.
+             , senderColor  :: a -- The color of the process that sent this warning message.
+             }
   deriving (Show, Eq)
 
 data ProcessConfig = ProcessConfig
@@ -29,16 +35,16 @@ data ProcessConfig = ProcessConfig
 -- A Letter contains a Message to send and the necessary info to be able to
 -- actually send the message to a process.
 -- Type Parameters:
--- Channel a
-data Letter a = Letter { recipientOf :: a -- The channel to send the message across.
-                       , msg :: Message   -- The message payload.
-                       }
+-- (Channel a, ProcessId b)
+data Letter a b = Letter { senderOf    :: a -- The channel to send the response accross.
+                         , recipientOf :: a -- The channel to send the message across.
+                         , msg         :: Message b  -- The message payload.
+                         } 
   deriving (Show, Eq)
 
 -- The state of a Process.
 -- Type Parameters:
--- ProcessId a
--- Channel b
+-- (ProcessId a, Channel b)
 data ProcessState a b = ProcessState { idColor       :: a     -- The color that uniquely identifies the process.
                                      , localColor    :: a     -- The current color of the process.
                                      , opCount       :: Count -- The number of operations that have been executed on this process.
@@ -50,10 +56,9 @@ data ProcessState a b = ProcessState { idColor       :: a     -- The color that 
                                      }
   deriving (Show, Eq)
 
-newtype ProcessAction a b c = ProcessAction { runAction :: RWS ProcessConfig [Letter b] (ProcessState a b) c }
-
-msgHandler :: Letter b -> ProcessAction a b ()
-msgHandler = undefined
+-- Type Parameters:
+-- (ProcessId a, Channel b, c)
+newtype ProcessAction a b c = ProcessAction { runAction :: RWS ProcessConfig [Letter b a] (ProcessState a b) c }
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
