@@ -2,7 +2,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Lib where
 
-import Control.Lens
+import Control.Lens (makeLenses)
 import Control.Monad.RWS.Lazy (RWS)
 import qualified Data.Set as S
 
@@ -14,8 +14,9 @@ class ProcessId a where
         isWhiteId :: a -> Bool
 
 -- Wrapper around Integer type.
-newtype Count = Count { getCount :: Integer }
+newtype Count = Count { _getCount :: Integer }
   deriving (Show, Eq)
+makeLenses ''Count
 
 class Channel a where
         makeChan :: a
@@ -26,10 +27,11 @@ class Channel a where
 -- ProcessId p
 data Message p =
   -- A warning message is sent to alert processes that a snapshot has begun.
-  WarningMsg { warningColor :: p -- The color of the initiator of the current snapshot.
-             , senderColor  :: p -- The color of the process that sent this warning message.
+  WarningMsg { _warningColor :: p -- The color of the initiator of the current snapshot.
+             , _senderColor  :: p -- The color of the process that sent this warning message.
              }
   deriving (Show, Eq)
+makeLenses ''Message
 
 data ProcessConfig = ProcessConfig
   deriving (Show, Eq)
@@ -43,21 +45,23 @@ data Letter c p = Letter { senderOf    :: c -- The channel to send the response 
                          , msg         :: Message p  -- The message payload.
                          } 
   deriving (Show, Eq)
+makeLenses ''Letter
 
 -- The state of a Process.
 -- Type Parameters:
 -- (ProcessId p, Channel c)
-data ProcessState p c = ProcessState { idColor       :: p     -- The color that uniquely identifies the process.
-                                     , localColor    :: p     -- The current color of the process.
-                                     , parentColor   :: p     -- The color of the parent process of this process. Inititally set to WHITE.
-                                     , opCount       :: Count -- The number of operations that have been executed on this process.
-                                     , snapshotCount :: Count -- The number of snapshots that this process has been involved in.
-                                     , inChannels    :: [c]   -- All incoming channels to this process.
-                                     , outchannels   :: [c]   -- All outgoing channels from this process.
-                                     , warningRecSet :: S.Set c -- Set of channels that have sent a warning to this process.
-                                     , idBorderSet   :: S.Set p -- Set of process ids that belong to neighboring master initiator processes.
+data ProcessState p c = ProcessState { _idColor       :: p     -- The color that uniquely identifies the process.
+                                     , _localColor    :: p     -- The current color of the process.
+                                     , _parentColor   :: p     -- The color of the parent process of this process. Inititally set to WHITE.
+                                     , _opCount       :: Count -- The number of operations that have been executed on this process.
+                                     , _snapshotCount :: Count -- The number of snapshots that this process has been involved in.
+                                     , _inChannels    :: [c]   -- All incoming channels to this process.
+                                     , _outchannels   :: [c]   -- All outgoing channels from this process.
+                                     , _warningRecSet :: S.Set c -- Set of channels that have sent a warning to this process.
+                                     , _idBorderSet   :: S.Set p -- Set of process ids that belong to neighboring master initiator processes.
                                      }
   deriving (Show, Eq)
+makeLenses ''ProcessState
 
 -- Type Parameters:
 -- (ProcessId a, Channel b, x)
@@ -66,7 +70,7 @@ newtype ProcessAction p c x = ProcessAction { runAction :: RWS ProcessConfig [Le
 msgHandler :: (Channel c, ProcessId p) => Letter c p -> ProcessAction p c ()
 msgHandler letter =
   case msg letter of
-    WarningMsg { warningColor=warningColor, senderColor=senderColor } -> undefined
+    WarningMsg { _warningColor=warningColor, _senderColor=senderColor } -> undefined
 
 changeColor :: (ProcessId p, Channel c) => p -> p -> ProcessAction p c ()
 changeColor warningColor senderColor = undefined
