@@ -2,7 +2,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Lib where
 
-import Control.Lens (makeLenses)
+import Control.Lens (makeLenses, (^.))
 import Control.Monad.RWS.Lazy (RWS)
 import qualified Data.Set as S
 
@@ -40,9 +40,9 @@ data ProcessConfig = ProcessConfig
 -- actually send the message to a process.
 -- Type Parameters:
 -- (Channel c, ProcessId p)
-data Letter c p = Letter { senderOf    :: c -- The channel to send the response accross.
-                         , recipientOf :: c -- The channel to send the message across.
-                         , msg         :: Message p  -- The message payload.
+data Letter c p = Letter { _senderOf    :: c -- The channel to send the response accross.
+                         , _recipientOf :: c -- The channel to send the message across.
+                         , _msg         :: Message p  -- The message payload.
                          } 
   deriving (Show, Eq)
 makeLenses ''Letter
@@ -69,7 +69,7 @@ newtype ProcessAction p c x = ProcessAction { runAction :: RWS ProcessConfig [Le
 
 msgHandler :: (Channel c, ProcessId p) => Letter c p -> ProcessAction p c ()
 msgHandler letter =
-  case msg letter of
+        case letter^.msg of
     WarningMsg { _warningColor=warningColor, _senderColor=senderColor } -> undefined
 
 changeColor :: (ProcessId p, Channel c) => p -> p -> ProcessAction p c ()
