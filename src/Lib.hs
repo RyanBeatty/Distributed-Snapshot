@@ -1,8 +1,10 @@
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE TemplateHaskell #-}
 module Lib where
 
-import qualified Data.Set as S
+import Control.Lens
 import Control.Monad.RWS.Lazy (RWS)
+import qualified Data.Set as S
 
 -- Interface for the 'Color' abstraction that Spezialleti and Kearns
 -- describes in their paper. Here the 'White' process id acts as a sentinal
@@ -47,6 +49,7 @@ data Letter c p = Letter { senderOf    :: c -- The channel to send the response 
 -- (ProcessId p, Channel c)
 data ProcessState p c = ProcessState { idColor       :: p     -- The color that uniquely identifies the process.
                                      , localColor    :: p     -- The current color of the process.
+                                     , parentColor   :: p     -- The color of the parent process of this process. Inititally set to WHITE.
                                      , opCount       :: Count -- The number of operations that have been executed on this process.
                                      , snapshotCount :: Count -- The number of snapshots that this process has been involved in.
                                      , inChannels    :: [c]   -- All incoming channels to this process.
@@ -65,9 +68,14 @@ msgHandler letter =
   case msg letter of
     WarningMsg { warningColor=warningColor, senderColor=senderColor } -> undefined
 
+changeColor :: (ProcessId p, Channel c) => p -> p -> ProcessAction p c ()
+changeColor warningColor senderColor = undefined
+
 handleWarningMsg :: (ProcessId p, Channel c) => c -> c -> p -> p -> ProcessAction p c ()
 handleWarningMsg senderOf recipientOf warningColor senderColor = undefined
   
+
+
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
