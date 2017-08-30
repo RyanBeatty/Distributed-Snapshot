@@ -61,7 +61,13 @@ data ProcessState p c = ProcessState { idColor       :: p     -- The color that 
 newtype ProcessAction p c x = ProcessAction { runAction :: RWS ProcessConfig [Letter c p] (ProcessState p c) x }
 
 msgHandler :: (Channel c, ProcessId p) => Letter c p -> ProcessAction p c ()
-msgHandler = undefined
+msgHandler letter =
+  case msg letter of
+    WarningMsg { warningColor=warningColor, senderColor=senderColor } -> undefined
+
+handleWarningMsg :: (ProcessId p, Channel c) => c -> c -> p -> p -> ProcessAction p c ()
+handleWarningMsg senderOf recipientOf warningColor senderColor = undefined
+  
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
