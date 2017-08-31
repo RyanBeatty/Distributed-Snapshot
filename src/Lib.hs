@@ -72,7 +72,6 @@ makeLenses ''ProcessState
 -- (ProcessId a, Channel b, x)
 newtype ProcessAction p c x = ProcessAction { runAction :: RWS ProcessConfig [Letter c p] (ProcessState p c) x }
         deriving (Functor, Applicative, Monad, MonadReader ProcessConfig, MonadWriter [Letter c p], MonadState (ProcessState p c))
---type ProcessAction p c x = RWS ProcessConfig [Letter c p] (ProcessState p c) x
 
 msgHandler :: (Channel c, ProcessId p) => Letter c p -> ProcessAction p c ()
 msgHandler letter =
