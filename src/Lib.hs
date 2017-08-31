@@ -3,8 +3,8 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Lib where
 
-import Control.Lens (makeLenses, (^.))
-import Control.Monad.RWS.Lazy (RWS, get)
+import Control.Lens (makeLenses, (^.), (.~), set)
+import Control.Monad.RWS.Lazy (RWS, get, put)
 import Control.Monad.Reader.Class (MonadReader)
 import Control.Monad.State.Class (MonadState)
 import Control.Monad.Writer.Class (MonadWriter)
@@ -81,6 +81,7 @@ msgHandler letter =
 changeColor :: (ProcessId p, Channel c) => p -> p -> ProcessAction p c ()
 changeColor warningColor senderColor = do
   ps <- get
+  put $ set localColor warningColor ps
   return ()
 
 handleWarningMsg :: (ProcessId p, Channel c) => c -> c -> p -> p -> ProcessAction p c ()
