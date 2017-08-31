@@ -4,7 +4,7 @@
 module Lib where
 
 import Control.Lens (makeLenses, (^.), (.~), set)
-import Control.Monad.RWS.Lazy (RWS, get, put, modify, tell, ask)
+import Control.Monad.RWS.Lazy (RWS, get, gets, put, modify, tell, ask)
 import Control.Monad.Reader.Class (MonadReader)
 import Control.Monad.State.Class (MonadState)
 import Control.Monad.Writer.Class (MonadWriter)
@@ -90,10 +90,8 @@ changeColor warning_color sender_color = do
            then sendChildMsg (ps^.idColor) (ps^.parentColor)
            else return ()
         saveCurrentState
-        ps' <- get
-        tell $ map (\x -> undefined) (ps'^.inChannels)
-        ps'' <- get
-        tell $ map (\x -> undefined) (ps''^.outChannels)
+        gets (^. inChannels) >>= (tell . map (\x -> undefined))
+        gets (^. outChannels) >>= (tell . map (\x -> undefined))
 
 sendChildMsg id_color parent_color = undefined
 
