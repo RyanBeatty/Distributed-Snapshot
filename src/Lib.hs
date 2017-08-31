@@ -4,10 +4,11 @@
 module Lib where
 
 import Control.Lens (makeLenses, (^.), (.~), set)
-import Control.Monad.RWS.Lazy (RWS, get, put)
+import Control.Monad.RWS.Lazy (RWS, get, put, modify, tell, ask)
 import Control.Monad.Reader.Class (MonadReader)
 import Control.Monad.State.Class (MonadState)
 import Control.Monad.Writer.Class (MonadWriter)
+import Data.Traversable (mapM)
 import qualified Data.Set as S
 
 -- Interface for the 'Color' abstraction that Spezialleti and Kearns
@@ -60,7 +61,7 @@ data ProcessState p c = ProcessState { _idColor       :: p     -- The color that
                                      , _opCount       :: Count -- The number of operations that have been executed on this process.
                                      , _snapshotCount :: Count -- The number of snapshots that this process has been involved in.
                                      , _inChannels    :: [c]   -- All incoming channels to this process.
-                                     , _outchannels   :: [c]   -- All outgoing channels from this process.
+                                     , _outChannels   :: [c]   -- All outgoing channels from this process.
                                      , _warningRecSet :: S.Set c -- Set of channels that have sent a warning to this process.
                                      , _idBorderSet   :: S.Set p -- Set of process ids that belong to neighboring master initiator processes.
                                      }
@@ -80,9 +81,23 @@ msgHandler letter =
 
 changeColor :: (ProcessId p, Channel c) => p -> p -> ProcessAction p c ()
 changeColor warningColor senderColor = do
-  ps <- get
-  put $ set localColor warningColor ps
-  return ()
+        -- set the local color and parent color of the process to be the warning color and sender color respectively.
+        -- The warning color tells the process what process is its master and the parent color tells the process which
+        -- process is its parent for this snapshot. 
+        modify (set parentColor senderColor . set localColor warningColor)
+        ps <- get
+        if isWhiteId (ps^.parentColor)
+           then sendChildMsg (ps^.idColor) (ps^.parentColor)
+           else return ()
+        saveCurrentState
+        ps' <- get
+        tell $ map (\x -> undefined) (ps'^.inChannels)
+        ps'' <- get
+        tell $ map (\x -> undefined) (ps''^.outChannels)
+
+sendChildMsg id_color parent_color = undefined
+
+saveCurrentState = undefined
 
 handleWarningMsg :: (ProcessId p, Channel c) => c -> c -> p -> p -> ProcessAction p c ()
 handleWarningMsg senderOf recipientOf warningColor senderColor = undefined
