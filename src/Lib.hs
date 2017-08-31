@@ -1,9 +1,13 @@
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Lib where
 
 import Control.Lens (makeLenses, (^.))
-import Control.Monad.RWS.Lazy (RWS)
+import Control.Monad.RWS.Lazy (RWS, get)
+import Control.Monad.Reader.Class (MonadReader)
+import Control.Monad.State.Class (MonadState)
+import Control.Monad.Writer.Class (MonadWriter)
 import qualified Data.Set as S
 
 -- Interface for the 'Color' abstraction that Spezialleti and Kearns
@@ -66,6 +70,8 @@ makeLenses ''ProcessState
 -- Type Parameters:
 -- (ProcessId a, Channel b, x)
 newtype ProcessAction p c x = ProcessAction { runAction :: RWS ProcessConfig [Letter c p] (ProcessState p c) x }
+        deriving (Functor, Applicative, Monad, MonadReader ProcessConfig, MonadWriter [Letter c p], MonadState (ProcessState p c))
+--type ProcessAction p c x = RWS ProcessConfig [Letter c p] (ProcessState p c) x
 
 msgHandler :: (Channel c, ProcessId p) => Letter c p -> ProcessAction p c ()
 msgHandler letter =
@@ -73,7 +79,9 @@ msgHandler letter =
     WarningMsg { _warningColor=warningColor, _senderColor=senderColor } -> undefined
 
 changeColor :: (ProcessId p, Channel c) => p -> p -> ProcessAction p c ()
-changeColor warningColor senderColor = undefined
+changeColor warningColor senderColor = do
+  ps <- get
+  return ()
 
 handleWarningMsg :: (ProcessId p, Channel c) => c -> c -> p -> p -> ProcessAction p c ()
 handleWarningMsg senderOf recipientOf warningColor senderColor = undefined
