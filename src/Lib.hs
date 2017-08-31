@@ -80,11 +80,11 @@ msgHandler letter =
     WarningMsg { _warningColor=warningColor, _senderColor=senderColor } -> undefined
 
 changeColor :: (ProcessId p, Channel c) => p -> p -> ProcessAction p c ()
-changeColor warningColor senderColor = do
+changeColor warning_color sender_color = do
         -- set the local color and parent color of the process to be the warning color and sender color respectively.
         -- The warning color tells the process what process is its master and the parent color tells the process which
         -- process is its parent for this snapshot. 
-        modify (set parentColor senderColor . set localColor warningColor)
+        modify (set parentColor sender_color . set localColor warning_color)
         ps <- get
         if isWhiteId (ps^.parentColor)
            then sendChildMsg (ps^.idColor) (ps^.parentColor)
