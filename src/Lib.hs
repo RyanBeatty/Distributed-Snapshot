@@ -81,6 +81,10 @@ msgHandler letter =
           WarningMsg { _warningColor=warning_color, _senderColor=sender_color } -> handleWarningMsg (letter^.senderOf) warning_color sender_color
           ChildMsg { _childColor=child_color } -> handleChildMsg child_color
 
+-- When a process gets its first warning message or wants to initiate a snapshot it will call this function.
+-- Args:
+--    warning_color - The color of the master process of this snapshot.
+--    sender_color  - The parent color of this process.
 changeColor :: (ProcessId p) => p -> p -> ProcessAction p ()
 changeColor warning_color sender_color = do
         -- set the local color and parent color of the process to be the warning color and sender color respectively.
@@ -88,8 +92,11 @@ changeColor warning_color sender_color = do
         -- process is its parent for this snapshot. 
         modify (set parentColor sender_color . set localColor warning_color)
         ps <- get
-        if isWhiteId (ps^.parentColor)
+        if (not . isWhiteId) (ps^.parentColor)
+           -- If the parent of this process is not the WHITE color, then alert the parent process that this process
+           -- is a child.
            then tell . mempty $ makeChildMsg (ps^.idColor) (ps^.parentColor) (ps^.idColor)
+           -- Else, this process is initiating a new snapshot so do nothing.
            else return ()
         saveCurrentState
         id_color <- gets (^. idColor)
