@@ -24,11 +24,13 @@ makeLenses ''Count
 
 -- Type Parameters:
 -- ProcessId p
-data Message p =
-  -- A warning message is sent to alert processes that a snapshot has begun.
-  WarningMsg { _warningColor :: p -- The color of the initiator of the current snapshot.
-             , _senderColor  :: p -- The color of the process that sent this warning message.
-             }
+data Message p = 
+        -- A warning message is sent to alert processes that a snapshot has begun.
+    WarningMsg { _warningColor :: p -- The color of the initiator of the current snapshot.
+               , _senderColor  :: p -- The color of the process that sent this warning message.
+               }
+  | ChildMsg { _childColor :: p -- The color of the child process.
+             } 
   deriving (Show, Eq)
 makeLenses ''Message
 
@@ -80,11 +82,13 @@ changeColor warning_color sender_color = do
         modify (set parentColor sender_color . set localColor warning_color)
         ps <- get
         if isWhiteId (ps^.parentColor)
-           then sendChildMsg (ps^.idColor) (ps^.parentColor)
+           then tell . mempty $ makeChildMsg (ps^.idColor) (ps^.parentColor) (ps^.idColor)
            else return ()
         saveCurrentState
         id_color <- gets (^. idColor)
+        -- Clear warning received set. This accomplishes the effect of starting to record messages on all incoming channels.
         modify (set warningRecSet mempty)
+        -- Make a warning message to send to every channel.
         gets (^. outChannels) >>= (tell . map (\channel -> makeWarningMsg id_color channel warning_color id_color))
 
 sendChildMsg id_color parent_color = undefined
@@ -93,7 +97,13 @@ saveCurrentState = undefined
 
 handleWarningMsg :: (ProcessId p) => p -> p -> p -> p -> ProcessAction p ()
 handleWarningMsg senderOf recipientOf warningColor senderColor = undefined
-  
+ 
+makeLetter :: (ProcessId p) => p -> p -> Message p -> Letter p
+makeLetter sender recipient msg = Letter { _senderOf=sender, _recipientOf=recipient, _msg=msg }
+
+makeChildMsg :: (ProcessId p) => p -> p -> p -> Letter p
+makeChildMsg sender recipient child_color = makeLetter sender recipient (ChildMsg { _childColor=child_color })
+
 makeWarningMsg :: (ProcessId p) => p -> p -> p -> p -> Letter p
 makeWarningMsg sender recipient warning_color sender_color = Letter { _senderOf=sender, _recipientOf=recipient, _msg=WarningMsg { _warningColor=warning_color, _senderColor=sender_color } }
 
