@@ -113,8 +113,10 @@ handleWarningMsg :: (ProcessId p) => p -> p -> p -> ProcessAction p ()
 handleWarningMsg sender warning_color sender_color = undefined
 
 -- Add the color of the new child to this processes' childSet.
+-- Args:
+--    child_color - The color of the new child process.
 handleChildMsg :: (ProcessId p) => p -> ProcessAction p ()
-handleChildMsg child_color = modify (over childSet (mappend (mempty child_color)))
+handleChildMsg = modify . over childSet . mappend . mempty
  
 makeLetter :: (ProcessId p) => p -> p -> Message p -> Letter p
 makeLetter sender recipient msg = Letter { _senderOf=sender, _recipientOf=recipient, _msg=msg }
