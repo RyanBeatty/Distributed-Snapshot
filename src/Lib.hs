@@ -2,11 +2,12 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Lib where
 
-import Control.Lens (makeLenses, (^.), (.~), set)
+import Control.Lens (makeLenses, (^.), (.~), set, over)
 import Control.Monad.RWS.Lazy (RWS, get, gets, put, modify, tell, ask)
 import Control.Monad.Reader.Class (MonadReader)
 import Control.Monad.State.Class (MonadState)
 import Control.Monad.Writer.Class (MonadWriter)
+import Data.Monoid (mappend)
 import Data.Traversable (mapM)
 import qualified Data.Set as S
 
@@ -60,6 +61,7 @@ data ProcessState p = ProcessState { _idColor       :: p       -- The color that
                                    , _outChannels   :: [p]     -- All processes that this process has an outgoing connection to.
                                    , _warningRecSet :: S.Set p -- Set of processes that have sent a warning to this process.
                                    , _idBorderSet   :: S.Set p -- Set of process ids that belong to neighboring master initiator processes.
+                                   , _childSet      :: S.Set p -- Set of all child process of this process.
                                    }
   deriving (Show, Eq)
 makeLenses ''ProcessState
@@ -73,6 +75,7 @@ msgHandler :: (ProcessId p) => Letter p -> ProcessAction p ()
 msgHandler letter =
         case letter^.msg of
     WarningMsg { _warningColor=warningColor, _senderColor=senderColor } -> undefined
+    ChildMsg { _childColor=child_color } -> handleChildMsg child_color
 
 changeColor :: (ProcessId p) => p -> p -> ProcessAction p ()
 changeColor warning_color sender_color = do
@@ -97,6 +100,10 @@ saveCurrentState = undefined
 
 handleWarningMsg :: (ProcessId p) => p -> p -> p -> p -> ProcessAction p ()
 handleWarningMsg senderOf recipientOf warningColor senderColor = undefined
+
+-- Add the color of the new child to this processes' childSet.
+handleChildMsg :: (ProcessId p) => p -> ProcessAction p ()
+handleChildMsg child_color = modify (over childSet (mappend (mempty child_color)))
  
 makeLetter :: (ProcessId p) => p -> p -> Message p -> Letter p
 makeLetter sender recipient msg = Letter { _senderOf=sender, _recipientOf=recipient, _msg=msg }
