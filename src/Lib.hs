@@ -105,7 +105,7 @@ makeChildMsg :: (ProcessId p) => p -> p -> p -> Letter p
 makeChildMsg sender recipient child_color = makeLetter sender recipient (ChildMsg { _childColor=child_color })
 
 makeWarningMsg :: (ProcessId p) => p -> p -> p -> p -> Letter p
-makeWarningMsg sender recipient warning_color sender_color = Letter { _senderOf=sender, _recipientOf=recipient, _msg=WarningMsg { _warningColor=warning_color, _senderColor=sender_color } }
+makeWarningMsg sender recipient warning_color sender_color = makeLetter sender recipient (WarningMsg { _warningColor=warning_color, _senderColor=sender_color })
 
 
 someFunc :: IO ()
