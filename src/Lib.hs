@@ -13,7 +13,7 @@ import qualified Data.Set as S
 -- Interface for the 'Color' abstraction that Spezialleti and Kearns
 -- describes in their paper. Here the 'White' process id acts as a sentinal
 -- process id.
-class (Eq p) => ProcessId p where
+class (Eq p, Ord p) => ProcessId p where
         -- Is the process id the 'White' process id.
         isWhiteId :: p -> Bool
 
@@ -84,7 +84,7 @@ changeColor warning_color sender_color = do
            else return ()
         saveCurrentState
         id_color <- gets (^. idColor)
-        modify (set warningRecSet S.empty)
+        modify (set warningRecSet mempty)
         gets (^. outChannels) >>= (tell . map (\channel -> makeWarningMsg id_color channel warning_color id_color))
 
 sendChildMsg id_color parent_color = undefined
