@@ -22,11 +22,6 @@ newtype Count = Count { _getCount :: Integer }
   deriving (Show, Eq)
 makeLenses ''Count
 
-class Channel a where
-        makeChan :: a
-        sendTo :: a -> ()
-        receiveFrom :: a -> ()
-
 -- Type Parameters:
 -- ProcessId p
 data Message p =
@@ -43,41 +38,41 @@ data ProcessConfig = ProcessConfig
 -- A Letter contains a Message to send and the necessary info to be able to
 -- actually send the message to a process.
 -- Type Parameters:
--- (Channel c, ProcessId p)
-data Letter c p = Letter { _senderOf    :: c -- The channel to send the response accross.
+-- (ProcessId c)
+data Letter c = Letter { _senderOf    :: c -- The channel to send the response accross.
                          , _recipientOf :: c -- The channel to send the message across.
-                         , _msg         :: Message p  -- The message payload.
+                         , _msg         :: Message c  -- The message payload.
                          } 
   deriving (Show, Eq)
 makeLenses ''Letter
 
 -- The state of a Process.
 -- Type Parameters:
--- (ProcessId p, Channel c)
-data ProcessState p c = ProcessState { _idColor       :: p     -- The color that uniquely identifies the process.
-                                     , _localColor    :: p     -- The current color of the process.
-                                     , _parentColor   :: p     -- The color of the parent process of this process. Inititally set to WHITE.
+-- (ProcessId c)
+data ProcessState c = ProcessState { _idColor       :: c     -- The color that uniquely identifies the process.
+                                     , _localColor    :: c     -- The current color of the process.
+                                     , _parentColor   :: c     -- The color of the parent process of this process. Inititally set to WHITE.
                                      , _opCount       :: Count -- The number of operations that have been executed on this process.
                                      , _snapshotCount :: Count -- The number of snapshots that this process has been involved in.
                                      , _inChannels    :: [c]   -- All incoming channels to this process.
                                      , _outChannels   :: [c]   -- All outgoing channels from this process.
                                      , _warningRecSet :: S.Set c -- Set of channels that have sent a warning to this process.
-                                     , _idBorderSet   :: S.Set p -- Set of process ids that belong to neighboring master initiator processes.
+                                     , _idBorderSet   :: S.Set c -- Set of process ids that belong to neighboring master initiator processes.
                                      }
   deriving (Show, Eq)
 makeLenses ''ProcessState
 
 -- Type Parameters:
 -- (ProcessId a, Channel b, x)
-newtype ProcessAction p c x = ProcessAction { runAction :: RWS ProcessConfig [Letter c p] (ProcessState p c) x }
-        deriving (Functor, Applicative, Monad, MonadReader ProcessConfig, MonadWriter [Letter c p], MonadState (ProcessState p c))
+newtype ProcessAction c x = ProcessAction { runAction :: RWS ProcessConfig [Letter c] (ProcessState c) x }
+        deriving (Functor, Applicative, Monad, MonadReader ProcessConfig, MonadWriter [Letter c], MonadState (ProcessState c))
 
-msgHandler :: (Channel c, ProcessId p) => Letter c p -> ProcessAction p c ()
+msgHandler :: (ProcessId c) => Letter c -> ProcessAction c ()
 msgHandler letter =
         case letter^.msg of
     WarningMsg { _warningColor=warningColor, _senderColor=senderColor } -> undefined
 
-changeColor :: (ProcessId p, Channel c) => p -> p -> ProcessAction p c ()
+changeColor :: (ProcessId c) => c -> c -> ProcessAction c ()
 changeColor warning_color sender_color = do
         -- set the local color and parent color of the process to be the warning color and sender color respectively.
         -- The warning color tells the process what process is its master and the parent color tells the process which
@@ -95,7 +90,7 @@ sendChildMsg id_color parent_color = undefined
 
 saveCurrentState = undefined
 
-handleWarningMsg :: (ProcessId p, Channel c) => c -> c -> p -> p -> ProcessAction p c ()
+handleWarningMsg :: (ProcessId c) => c -> c -> c -> c -> ProcessAction c ()
 handleWarningMsg senderOf recipientOf warningColor senderColor = undefined
   
 
