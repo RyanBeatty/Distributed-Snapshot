@@ -93,7 +93,8 @@ saveCurrentState = undefined
 handleWarningMsg :: (ProcessId p) => p -> p -> p -> p -> ProcessAction p ()
 handleWarningMsg senderOf recipientOf warningColor senderColor = undefined
   
-
+makeWarningMsg :: (ProcessId p) => p -> p -> p -> p -> Letter p
+makeWarningMsg sender recipient warning_color sender_color = Letter { _senderOf=sender, _recipientOf=recipient, _msg=WarningMsg { _warningColor=warning_color, _senderColor=sender_color } }
 
 
 someFunc :: IO ()
