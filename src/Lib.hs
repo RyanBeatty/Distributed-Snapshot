@@ -83,8 +83,9 @@ changeColor warning_color sender_color = do
            then sendChildMsg (ps^.idColor) (ps^.parentColor)
            else return ()
         saveCurrentState
-        gets (^. inChannels) >>= (tell . map (\x -> undefined))
-        gets (^. outChannels) >>= (tell . map (\x -> undefined))
+        id_color <- gets (^. idColor)
+        modify (set warningRecSet S.empty)
+        gets (^. outChannels) >>= (tell . map (\channel -> makeWarningMsg id_color channel warning_color id_color))
 
 sendChildMsg id_color parent_color = undefined
 
