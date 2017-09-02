@@ -13,9 +13,9 @@ import qualified Data.Set as S
 -- Interface for the 'Color' abstraction that Spezialleti and Kearns
 -- describes in their paper. Here the 'White' process id acts as a sentinal
 -- process id.
-class ProcessId a where
+class (Eq p) => ProcessId p where
         -- Is the process id the 'White' process id.
-        isWhiteId :: a -> Bool
+        isWhiteId :: p -> Bool
 
 -- Wrapper around Integer type.
 newtype Count = Count { _getCount :: Integer }
