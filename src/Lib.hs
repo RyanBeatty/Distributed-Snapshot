@@ -38,41 +38,41 @@ data ProcessConfig = ProcessConfig
 -- A Letter contains a Message to send and the necessary info to be able to
 -- actually send the message to a process.
 -- Type Parameters:
--- (ProcessId c)
-data Letter c = Letter { _senderOf    :: c -- The channel to send the response accross.
-                         , _recipientOf :: c -- The channel to send the message across.
-                         , _msg         :: Message c  -- The message payload.
-                         } 
+-- (ProcessId p)
+data Letter p = Letter { _senderOf    :: p -- The sender process of this message.
+                       , _recipientOf :: p -- The the receiver process of this message.
+                       , _msg         :: Message p  -- The message payload.
+                       } 
   deriving (Show, Eq)
 makeLenses ''Letter
 
 -- The state of a Process.
 -- Type Parameters:
--- (ProcessId c)
-data ProcessState c = ProcessState { _idColor       :: c     -- The color that uniquely identifies the process.
-                                     , _localColor    :: c     -- The current color of the process.
-                                     , _parentColor   :: c     -- The color of the parent process of this process. Inititally set to WHITE.
-                                     , _opCount       :: Count -- The number of operations that have been executed on this process.
-                                     , _snapshotCount :: Count -- The number of snapshots that this process has been involved in.
-                                     , _inChannels    :: [c]   -- All incoming channels to this process.
-                                     , _outChannels   :: [c]   -- All outgoing channels from this process.
-                                     , _warningRecSet :: S.Set c -- Set of channels that have sent a warning to this process.
-                                     , _idBorderSet   :: S.Set c -- Set of process ids that belong to neighboring master initiator processes.
-                                     }
+-- (ProcessId p)
+data ProcessState p = ProcessState { _idColor       :: p       -- The color that uniquely identifies the process.
+                                   , _localColor    :: p       -- The current color of the process.
+                                   , _parentColor   :: p       -- The color of the parent process of this process. Inititally set to WHITE.
+                                   , _opCount       :: Count   -- The number of operations that have been executed on this process.
+                                   , _snapshotCount :: Count   -- The number of snapshots that this process has been involved in.
+                                   , _inChannels    :: [p]     -- All processes with an incoming connection to this process.
+                                   , _outChannels   :: [p]     -- All processes that this process has an outgoing connection to.
+                                   , _warningRecSet :: S.Set p -- Set of processes that have sent a warning to this process.
+                                   , _idBorderSet   :: S.Set p -- Set of process ids that belong to neighboring master initiator processes.
+                                   }
   deriving (Show, Eq)
 makeLenses ''ProcessState
 
 -- Type Parameters:
--- (ProcessId a, Channel b, x)
-newtype ProcessAction c x = ProcessAction { runAction :: RWS ProcessConfig [Letter c] (ProcessState c) x }
-        deriving (Functor, Applicative, Monad, MonadReader ProcessConfig, MonadWriter [Letter c], MonadState (ProcessState c))
+-- (ProcessId p, x)
+newtype ProcessAction p x = ProcessAction { runAction :: RWS ProcessConfig [Letter p] (ProcessState p) x }
+        deriving (Functor, Applicative, Monad, MonadReader ProcessConfig, MonadWriter [Letter p], MonadState (ProcessState p))
 
-msgHandler :: (ProcessId c) => Letter c -> ProcessAction c ()
+msgHandler :: (ProcessId p) => Letter p -> ProcessAction p ()
 msgHandler letter =
         case letter^.msg of
     WarningMsg { _warningColor=warningColor, _senderColor=senderColor } -> undefined
 
-changeColor :: (ProcessId c) => c -> c -> ProcessAction c ()
+changeColor :: (ProcessId p) => p -> p -> ProcessAction p ()
 changeColor warning_color sender_color = do
         -- set the local color and parent color of the process to be the warning color and sender color respectively.
         -- The warning color tells the process what process is its master and the parent color tells the process which
@@ -90,7 +90,7 @@ sendChildMsg id_color parent_color = undefined
 
 saveCurrentState = undefined
 
-handleWarningMsg :: (ProcessId c) => c -> c -> c -> c -> ProcessAction c ()
+handleWarningMsg :: (ProcessId p) => p -> p -> p -> p -> ProcessAction p ()
 handleWarningMsg senderOf recipientOf warningColor senderColor = undefined
   
 
