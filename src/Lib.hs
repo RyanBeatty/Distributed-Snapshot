@@ -49,6 +49,9 @@ data Letter p = Letter { _senderOf    :: p -- The sender process of this message
   deriving (Show, Eq)
 makeLenses ''Letter
 
+data StateBundle = StateBundle
+  deriving (Show, Eq)
+
 -- The state of a Process.
 -- Type Parameters:
 -- (ProcessId p)
@@ -62,6 +65,7 @@ data ProcessState p = ProcessState { _idColor       :: p       -- The color that
                                    , _warningRecSet :: S.Set p -- Set of processes that have sent a warning to this process.
                                    , _idBorderSet   :: S.Set p -- Set of process ids that belong to neighboring master initiator processes.
                                    , _childSet      :: S.Set p -- Set of all child process of this process.
+                                   , _stateBundle   :: StateBundle
                                    }
   deriving (Show, Eq)
 makeLenses ''ProcessState
@@ -74,8 +78,8 @@ newtype ProcessAction p x = ProcessAction { runAction :: RWS ProcessConfig [Lett
 msgHandler :: (ProcessId p) => Letter p -> ProcessAction p ()
 msgHandler letter =
         case letter^.msg of
-    WarningMsg { _warningColor=warningColor, _senderColor=senderColor } -> undefined
-    ChildMsg { _childColor=child_color } -> handleChildMsg child_color
+          WarningMsg { _warningColor=warning_color, _senderColor=sender_color } -> handleWarningMsg (letter^.senderOf) warning_color sender_color
+          ChildMsg { _childColor=child_color } -> handleChildMsg child_color
 
 changeColor :: (ProcessId p) => p -> p -> ProcessAction p ()
 changeColor warning_color sender_color = do
@@ -98,8 +102,8 @@ sendChildMsg id_color parent_color = undefined
 
 saveCurrentState = undefined
 
-handleWarningMsg :: (ProcessId p) => p -> p -> p -> p -> ProcessAction p ()
-handleWarningMsg senderOf recipientOf warningColor senderColor = undefined
+handleWarningMsg :: (ProcessId p) => p -> p -> p -> ProcessAction p ()
+handleWarningMsg sender warning_color sender_color = undefined
 
 -- Add the color of the new child to this processes' childSet.
 handleChildMsg :: (ProcessId p) => p -> ProcessAction p ()
