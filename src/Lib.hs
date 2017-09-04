@@ -2,7 +2,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Lib where
 
-import Control.Lens (makeLenses, (^.), (.~), set, over)
+import Control.Lens (makeLenses, (^.), (.~), set, over, view)
 import Control.Monad.RWS.Lazy (RWS, get, gets, put, modify, tell, ask)
 import Control.Monad.Reader.Class (MonadReader)
 import Control.Monad.State.Class (MonadState)
@@ -103,7 +103,7 @@ changeColor warning_color sender_color = do
         -- Clear warning received set. This accomplishes the effect of starting to record messages on all incoming channels.
         modify (set warningRecSet mempty)
         -- Make a warning message to send to every channel.
-        gets (^. outChannels) >>= (tell . map (\channel -> makeWarningMsg id_color channel warning_color id_color))
+        gets (view outChannels) >>= (tell . map (\channel -> makeWarningMsg id_color channel warning_color id_color))
 
 sendChildMsg id_color parent_color = undefined
 
