@@ -99,7 +99,7 @@ changeColor warning_color sender_color = do
            -- Else, this process is initiating a new snapshot so do nothing.
            else return ()
         saveCurrentState
-        id_color <- gets (^. idColor)
+        id_color <- gets (view idColor)
         -- Clear warning received set. This accomplishes the effect of starting to record messages on all incoming channels.
         modify (set warningRecSet mempty)
         -- Make a warning message to send to every channel.
