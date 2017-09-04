@@ -20,7 +20,7 @@ class (Eq p, Ord p) => ProcessId p where
 
 -- Wrapper around Integer type.
 newtype Count = Count { _getCount :: Integer }
-  deriving (Show, Eq)
+        deriving (Show, Eq, Ord, Num, Enum)
 makeLenses ''Count
 
 -- Type Parameters:
@@ -87,10 +87,11 @@ msgHandler letter =
 --    sender_color  - The parent color of this process.
 changeColor :: (ProcessId p) => p -> p -> ProcessAction p ()
 changeColor warning_color sender_color = do
-        -- set the local color and parent color of the process to be the warning color and sender color respectively.
-        -- The warning color tells the process what process is its master and the parent color tells the process which
-        -- process is its parent for this snapshot. 
-        modify (set parentColor sender_color . set localColor warning_color)
+        -- Increment the count of the number of snapshots this process has been involved in by 1, set the local color
+        -- and parent color of the process to be the warning color and sender color respectively. The warning color tells
+        -- the process what process is its master and the parent color tells the process which process is its parent
+        -- for this snapshot. 
+        modify (set parentColor sender_color . set localColor warning_color . over snapshotCount succ)
         ps <- get
         if (not . isWhiteId) (ps^.parentColor)
            -- If the parent of this process is not the WHITE color, then alert the parent process that this process
@@ -104,8 +105,6 @@ changeColor warning_color sender_color = do
         -- Make a warning message to send to every channel.
         id_color <- gets (view idColor)
         gets (view outChannels) >>= (tell . map (\channel -> makeWarningMsg id_color channel warning_color id_color))
-
-sendChildMsg id_color parent_color = undefined
 
 saveCurrentState = undefined
 
