@@ -1,8 +1,11 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
+
 module Lib where
 
-import Control.Lens (makeLenses, (^.), (.~), set, over, view)
+import Control.Lens (makeLenses, makeFields, (^.), (.~), set, over, view)
 import Control.Monad.RWS.Lazy (RWS, get, gets, put, modify, tell, ask)
 import Control.Monad.Reader.Class (MonadReader)
 import Control.Monad.State.Class (MonadState)
@@ -19,9 +22,9 @@ class (Eq p, Ord p) => ProcessId p where
         isWhiteId :: p -> Bool
 
 -- Wrapper around Integer type.
-newtype Count = Count { _getCount :: Integer }
+newtype Count = Count { _countGetCount :: Integer }
         deriving (Show, Eq, Ord, Num, Enum)
-makeLenses ''Count
+makeFields ''Count
 
 -- Type Parameters:
 -- ProcessId p
