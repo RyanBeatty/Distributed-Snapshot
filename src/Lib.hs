@@ -135,7 +135,12 @@ takeSnapshot warning_color = do
          in modify (stateBundle .~ mempty snapshot)
 
 handleWarningMsg :: (ProcessId p) => p -> p -> p -> ProcessAction p ()
-handleWarningMsg sender warning_color sender_color = undefined
+handleWarningMsg sender warning_color sender_color = do
+        local_color <- gets (^. localColor)
+        if isWhiteId local_color
+           then changeColor warning_color sender_color
+           else return ()
+        
 
 -- Add the color of the new child to this processes' childSet.
 -- Args:
