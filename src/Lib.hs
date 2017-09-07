@@ -46,12 +46,12 @@ data ProcessConfig = ProcessConfig
 -- actually send the message to a process.
 -- Type Parameters:
 -- (ProcessId p)
-data Letter p = Letter { _senderOf    :: p -- The sender process of this message.
-                       , _recipientOf :: p -- The the receiver process of this message.
-                       , _msg         :: Message p  -- The message payload.
+data Letter p = Letter { _letterSenderOf    :: p -- The sender process of this message.
+                       , _letterRecipientOf :: p -- The the receiver process of this message.
+                       , _letterMsg         :: Message p  -- The message payload.
                        } 
   deriving (Show, Eq)
-makeLenses ''Letter
+makeFields ''Letter
 
 data StateBundle = StateBundle
   deriving (Show, Eq)
@@ -122,7 +122,7 @@ handleChildMsg :: (ProcessId p) => p -> ProcessAction p ()
 handleChildMsg = modify . over childSet . mappend . mempty
  
 makeLetter :: (ProcessId p) => p -> p -> Message p -> Letter p
-makeLetter sender recipient msg = Letter { _senderOf=sender, _recipientOf=recipient, _msg=msg }
+makeLetter sender recipient msg = Letter { _letterSenderOf=sender, _letterRecipientOf=recipient, _letterMsg=msg }
 
 makeChildMsg :: (ProcessId p) => p -> p -> p -> Letter p
 makeChildMsg sender recipient child_color = makeLetter sender recipient (ChildMsg { _messageChildColor=child_color })
