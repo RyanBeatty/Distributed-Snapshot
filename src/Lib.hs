@@ -53,15 +53,19 @@ data Letter p = Letter { _letterSenderOf    :: p -- The sender process of this m
   deriving (Show, Eq)
 makeFields ''Letter
 
-data SnapshotInfo p = SnapshotInfo { _snapshotInfoIdColor :: p
-                                   , _snapshotInfoOpCount :: Count
-                                   , _snapshotInfoSnapshotCount :: Count
-                                   , _snapshotInfoWarningColor :: p
-                                   , _snapshotInfoParentColor :: p
+-- A SnapshotInfo contains all of the local state information of a process that is needed
+-- to build the snapshot by master process of a snapshot.
+data SnapshotInfo p = SnapshotInfo { _snapshotInfoIdColor :: p            -- The color of the process this SnapshotInfo is for.
+                                   , _snapshotInfoOpCount :: Count        -- The operation count of the process.
+                                   , _snapshotInfoSnapshotCount :: Count  -- The number of snapshots this process has been in.
+                                   , _snapshotInfoWarningColor :: p       -- The color of the initiator of the snapshot this process is in.
+                                   , _snapshotInfoParentColor :: p        -- The parent color of this process.
                                    }
   deriving (Show, Eq)
 makeFields ''SnapshotInfo
 
+-- A StateBundle is a collection of SnapshotInfos from various processes. Child processes accumulate and send their
+-- bundles to their master processes which build the snapshots.
 newtype StateBundle p = StateBundle { _stateBundleSnapshotInfos :: [SnapshotInfo p] }
         deriving (Show, Eq, Monoid)
 makeFields ''StateBundle
@@ -113,7 +117,7 @@ changeColor warning_color sender_color = do
            then tell . mempty $ makeChildMsg (ps^.idColor) (ps^.parentColor) (ps^.idColor)
            -- Else, this process is initiating a new snapshot so do nothing.
            else return ()
-       
+        -- Save the local state of this process that is needed for the snapshot.
         takeSnapshot warning_color
         -- Clear warning received set. This accomplishes the effect of starting to record messages on all incoming channels.
         modify (set warningRecSet mempty)
@@ -121,11 +125,14 @@ changeColor warning_color sender_color = do
         id_color <- gets (view idColor)
         gets (view outChannels) >>= (tell . map (\channel -> makeWarningMsg id_color channel warning_color id_color))
 
+-- Saves the local state of the process that is needed for the snapshot.
+-- Args: warning_color - The color of the master process of this snapshot.
+-- TODO: I think warning_color should be in the process state, so I might be able to remove this parameter.
 takeSnapshot :: (ProcessId p) => p -> ProcessAction p ()
 takeSnapshot warning_color = do
         ps <- get
-        let snapshot = mempty $ makeSnapshotInfo (ps^.idColor) (ps^.opCount) (ps^.snapshotCount) warning_color (ps^.parentColor)
-        modify (set stateBundle snapshot)
+        let snapshot = makeSnapshotInfo (ps^.idColor) (ps^.opCount) (ps^.snapshotCount) warning_color (ps^.parentColor)
+         in modify (stateBundle .~ mempty snapshot)
 
 handleWarningMsg :: (ProcessId p) => p -> p -> p -> ProcessAction p ()
 handleWarningMsg sender warning_color sender_color = undefined
