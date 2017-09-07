@@ -59,20 +59,20 @@ data StateBundle = StateBundle
 -- The state of a Process.
 -- Type Parameters:
 -- (ProcessId p)
-data ProcessState p = ProcessState { _idColor       :: p       -- The color that uniquely identifies the process.
-                                   , _localColor    :: p       -- The current color of the process.
-                                   , _parentColor   :: p       -- The color of the parent process of this process. Inititally set to WHITE.
-                                   , _opCount       :: Count   -- The number of operations that have been executed on this process.
-                                   , _snapshotCount :: Count   -- The number of snapshots that this process has been involved in.
-                                   , _inChannels    :: [p]     -- All processes with an incoming connection to this process.
-                                   , _outChannels   :: [p]     -- All processes that this process has an outgoing connection to.
-                                   , _warningRecSet :: S.Set p -- Set of processes that have sent a warning to this process.
-                                   , _idBorderSet   :: S.Set p -- Set of process ids that belong to neighboring master initiator processes.
-                                   , _childSet      :: S.Set p -- Set of all child process of this process.
-                                   , _stateBundle   :: StateBundle
+data ProcessState p = ProcessState { _processStateIdColor       :: p       -- The color that uniquely identifies the process.
+                                   , _processStateLocalColor    :: p       -- The current color of the process.
+                                   , _processStateParentColor   :: p       -- The color of the parent process of this process. Inititally set to WHITE.
+                                   , _processStateOpCount       :: Count   -- The number of operations that have been executed on this process.
+                                   , _processStateSnapshotCount :: Count   -- The number of snapshots that this process has been involved in.
+                                   , _processStateInChannels    :: [p]     -- All processes with an incoming connection to this process.
+                                   , _processStateOutChannels   :: [p]     -- All processes that this process has an outgoing connection to.
+                                   , _processStateWarningRecSet :: S.Set p -- Set of processes that have sent a warning to this process.
+                                   , _processStateIdBorderSet   :: S.Set p -- Set of process ids that belong to neighboring master initiator processes.
+                                   , _processStateChildSet      :: S.Set p -- Set of all child process of this process.
+                                   , _processStateStateBundle   :: StateBundle
                                    }
   deriving (Show, Eq)
-makeLenses ''ProcessState
+makeFields ''ProcessState
 
 -- Type Parameters:
 -- (ProcessId p, x)
