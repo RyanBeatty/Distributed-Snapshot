@@ -1,7 +1,8 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE MultiParamTypeClasses #-}  -- Needed to use makeFields.
+{-# LANGUAGE FunctionalDependencies #-} -- Needed to use makeFields.
+{-# LANGUAGE FlexibleInstances #-}      -- Needed to use makeFields.
 
 module Lib where
 
@@ -30,13 +31,13 @@ makeFields ''Count
 -- ProcessId p
 data Message p = 
         -- A warning message is sent to alert processes that a snapshot has begun.
-    WarningMsg { _warningColor :: p -- The color of the initiator of the current snapshot.
-               , _senderColor  :: p -- The color of the process that sent this warning message.
+    WarningMsg { _messageWarningColor :: p -- The color of the initiator of the current snapshot.
+               , _messageSenderColor  :: p -- The color of the process that sent this warning message.
                }
-  | ChildMsg { _childColor :: p -- The color of the child process.
+  | ChildMsg { _messageChildColor :: p -- The color of the child process.
              } 
   deriving (Show, Eq)
-makeLenses ''Message
+makeFields ''Message
 
 data ProcessConfig = ProcessConfig
   deriving (Show, Eq)
@@ -81,8 +82,8 @@ newtype ProcessAction p x = ProcessAction { runAction :: RWS ProcessConfig [Lett
 msgHandler :: (ProcessId p) => Letter p -> ProcessAction p ()
 msgHandler letter =
         case letter^.msg of
-          WarningMsg { _warningColor=warning_color, _senderColor=sender_color } -> handleWarningMsg (letter^.senderOf) warning_color sender_color
-          ChildMsg { _childColor=child_color } -> handleChildMsg child_color
+          WarningMsg { _messageWarningColor=warning_color, _messageSenderColor=sender_color } -> handleWarningMsg (letter^.senderOf) warning_color sender_color
+          ChildMsg { _messageChildColor=child_color } -> handleChildMsg child_color
 
 -- When a process gets its first warning message or wants to initiate a snapshot it will call this function.
 -- Args:
@@ -124,10 +125,10 @@ makeLetter :: (ProcessId p) => p -> p -> Message p -> Letter p
 makeLetter sender recipient msg = Letter { _senderOf=sender, _recipientOf=recipient, _msg=msg }
 
 makeChildMsg :: (ProcessId p) => p -> p -> p -> Letter p
-makeChildMsg sender recipient child_color = makeLetter sender recipient (ChildMsg { _childColor=child_color })
+makeChildMsg sender recipient child_color = makeLetter sender recipient (ChildMsg { _messageChildColor=child_color })
 
 makeWarningMsg :: (ProcessId p) => p -> p -> p -> p -> Letter p
-makeWarningMsg sender recipient warning_color sender_color = makeLetter sender recipient (WarningMsg { _warningColor=warning_color, _senderColor=sender_color })
+makeWarningMsg sender recipient warning_color sender_color = makeLetter sender recipient (WarningMsg { _messageWarningColor=warning_color, _messageSenderColor=sender_color })
 
 
 someFunc :: IO ()
