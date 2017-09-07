@@ -53,8 +53,18 @@ data Letter p = Letter { _letterSenderOf    :: p -- The sender process of this m
   deriving (Show, Eq)
 makeFields ''Letter
 
-data StateBundle = StateBundle
+data SnapshotInfo p = SnapshotInfo { _snapshotInfoIdColor :: p
+                                   , _snapshotInfoOpCount :: p
+                                   , _snapshotInfoSnapshotCount :: Count
+                                   , _snapshotInfoWarningColor :: p
+                                   , _snapshotInfoParentColor :: p
+                                   }
   deriving (Show, Eq)
+makeFields ''SnapshotInfo
+
+newtype StateBundle p = StateBundle { _stateBundleSnapshotInfos :: [SnapshotInfo p] }
+  deriving (Show, Eq)
+makeFields ''StateBundle
 
 -- The state of a Process.
 -- Type Parameters:
@@ -69,7 +79,7 @@ data ProcessState p = ProcessState { _processStateIdColor       :: p       -- Th
                                    , _processStateWarningRecSet :: S.Set p -- Set of processes that have sent a warning to this process.
                                    , _processStateIdBorderSet   :: S.Set p -- Set of process ids that belong to neighboring master initiator processes.
                                    , _processStateChildSet      :: S.Set p -- Set of all child process of this process.
-                                   , _processStateStateBundle   :: StateBundle
+                                   , _processStateStateBundle   :: StateBundle p
                                    }
   deriving (Show, Eq)
 makeFields ''ProcessState
