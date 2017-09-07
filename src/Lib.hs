@@ -120,7 +120,7 @@ changeColor warning_color sender_color = do
         -- Save the local state of this process that is needed for the snapshot.
         takeSnapshot warning_color
         -- Clear warning received set. This accomplishes the effect of starting to record messages on all incoming channels.
-        modify (set warningRecSet mempty)
+        modify (warningRecSet .~ mempty)
         -- Make a warning message to send to every channel.
         id_color <- gets (view idColor)
         gets (view outChannels) >>= (tell . map (\channel -> makeWarningMsg id_color channel warning_color id_color))
