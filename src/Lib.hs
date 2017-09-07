@@ -54,7 +54,7 @@ data Letter p = Letter { _letterSenderOf    :: p -- The sender process of this m
 makeFields ''Letter
 
 data SnapshotInfo p = SnapshotInfo { _snapshotInfoIdColor :: p
-                                   , _snapshotInfoOpCount :: p
+                                   , _snapshotInfoOpCount :: Count
                                    , _snapshotInfoSnapshotCount :: Count
                                    , _snapshotInfoWarningColor :: p
                                    , _snapshotInfoParentColor :: p
@@ -63,7 +63,7 @@ data SnapshotInfo p = SnapshotInfo { _snapshotInfoIdColor :: p
 makeFields ''SnapshotInfo
 
 newtype StateBundle p = StateBundle { _stateBundleSnapshotInfos :: [SnapshotInfo p] }
-  deriving (Show, Eq)
+        deriving (Show, Eq, Monoid)
 makeFields ''StateBundle
 
 -- The state of a Process.
@@ -113,14 +113,19 @@ changeColor warning_color sender_color = do
            then tell . mempty $ makeChildMsg (ps^.idColor) (ps^.parentColor) (ps^.idColor)
            -- Else, this process is initiating a new snapshot so do nothing.
            else return ()
-        saveCurrentState
+       
+        takeSnapshot warning_color
         -- Clear warning received set. This accomplishes the effect of starting to record messages on all incoming channels.
         modify (set warningRecSet mempty)
         -- Make a warning message to send to every channel.
         id_color <- gets (view idColor)
         gets (view outChannels) >>= (tell . map (\channel -> makeWarningMsg id_color channel warning_color id_color))
 
-saveCurrentState = undefined
+takeSnapshot :: (ProcessId p) => p -> ProcessAction p ()
+takeSnapshot warning_color = do
+        ps <- get
+        let snapshot = mempty $ makeSnapshotInfo (ps^.idColor) (ps^.opCount) (ps^.snapshotCount) warning_color (ps^.parentColor)
+        modify (set stateBundle snapshot)
 
 handleWarningMsg :: (ProcessId p) => p -> p -> p -> ProcessAction p ()
 handleWarningMsg sender warning_color sender_color = undefined
@@ -140,6 +145,8 @@ makeChildMsg sender recipient child_color = makeLetter sender recipient (ChildMs
 makeWarningMsg :: (ProcessId p) => p -> p -> p -> p -> Letter p
 makeWarningMsg sender recipient warning_color sender_color = makeLetter sender recipient (WarningMsg { _messageWarningColor=warning_color, _messageSenderColor=sender_color })
 
+makeSnapshotInfo :: (ProcessId p) => p -> Count -> Count -> p -> p -> SnapshotInfo p
+makeSnapshotInfo id_color op_count snapshot_count warning_color parent_color = SnapshotInfo { _snapshotInfoIdColor=id_color, _snapshotInfoOpCount=op_count, _snapshotInfoSnapshotCount=snapshot_count, _snapshotInfoWarningColor=warning_color, _snapshotInfoParentColor=parent_color }
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
