@@ -132,7 +132,8 @@ takeSnapshot :: (ProcessId p) => p -> ProcessAction p ()
 takeSnapshot warning_color = do
         ps <- get
         let snapshot = makeSnapshotInfo (ps^.idColor) (ps^.opCount) (ps^.snapshotCount) warning_color (ps^.parentColor)
-         in modify (stateBundle .~ mempty snapshot)
+            -- TODO: fix this ad hoc creation of a StateBundle. Its really ugly. 
+         in modify (set stateBundle $ StateBundle { _stateBundleSnapshotInfos=[snapshot] })
 
 handleWarningMsg :: (ProcessId p) => p -> p -> p -> ProcessAction p ()
 handleWarningMsg sender warning_color sender_color = do
@@ -164,7 +165,7 @@ handleWarningMsg sender warning_color sender_color = do
 -- Args:
 --    child_color - The color of the new child process.
 handleChildMsg :: (ProcessId p) => p -> ProcessAction p ()
-handleChildMsg = modify . over childSet . mappend . mempty
+handleChildMsg = modify . over childSet . mappend . S.singleton 
  
 makeLetter :: (ProcessId p) => p -> p -> Message p -> Letter p
 makeLetter sender recipient msg = Letter { _letterSenderOf=sender, _letterRecipientOf=recipient, _letterMsg=msg }
