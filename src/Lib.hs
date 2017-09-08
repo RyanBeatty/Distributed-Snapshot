@@ -136,8 +136,10 @@ takeSnapshot warning_color = do
 
 handleWarningMsg :: (ProcessId p) => p -> p -> p -> ProcessAction p ()
 handleWarningMsg sender warning_color sender_color = do
-        local_color <- gets (^. localColor)
-        if isWhiteId local_color
+        -- Check if this process is currently involved in a snapshot.
+        not_in_snapshot <- gets (isWhiteId . view localColor)
+        if not_in_snapshot
+           -- If this process is not apart of a snapshot, change its color to signal that it is in the current snapshot.
            then changeColor warning_color sender_color
            else return ()
         
