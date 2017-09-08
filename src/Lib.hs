@@ -142,6 +142,22 @@ handleWarningMsg sender warning_color sender_color = do
            -- If this process is not apart of a snapshot, change its color to signal that it is in the current snapshot.
            then changeColor warning_color sender_color
            else return ()
+        -- TODO: figure out why line below doesn't type check.
+        --is_neighbor_warning <- gets ((==) <$> (view localColor) <*> warning_color)
+        lc <- gets (view localColor)
+        if lc /= warning_color
+           -- We were sent a warning message by a process in a neighboring region, so add its master process to the border set.
+           then modify . over idBorderSet . mappend . mempty $ warning_color
+           else return ()
+        -- Signal that we have received a warning from the process.
+        modify . over warningRecSet . mappend . mempty $ sender_color
+        --wrc <- gets (view warningRecSet)
+        --ic  <- gets (view inChannels)
+        --cs  <- gets (view childSet)
+        --if wrc == ic && cs == mempty 
+        --   then return ()
+        --   else return ()
+        return ()
         
 
 -- Add the color of the new child to this processes' childSet.
