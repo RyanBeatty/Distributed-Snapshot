@@ -114,7 +114,7 @@ changeColor warning_color sender_color = do
         if (not . isWhiteId) (ps^.parentColor)
            -- If the parent of this process is not the WHITE color, then alert the parent process that this process
            -- is a child.
-           then tell . mempty $ makeChildMsg (ps^.idColor) (ps^.parentColor) (ps^.idColor)
+           then tell . pure $ makeChildMsg (ps^.idColor) (ps^.parentColor) (ps^.idColor)
            -- Else, this process is initiating a new snapshot so do nothing.
            else return ()
         -- Save the local state of this process that is needed for the snapshot.
@@ -147,10 +147,10 @@ handleWarningMsg sender warning_color sender_color = do
         lc <- gets (view localColor)
         if lc /= warning_color
            -- We were sent a warning message by a process in a neighboring region, so add its master process to the border set.
-           then modify . over idBorderSet . mappend . mempty $ warning_color
+           then modify . over idBorderSet . mappend . S.singleton $ warning_color
            else return ()
         -- Signal that we have received a warning from the process.
-        modify . over warningRecSet . mappend . mempty $ sender_color
+        modify . over warningRecSet . mappend . S.singleton $ sender_color
         --wrc <- gets (view warningRecSet)
         --ic  <- gets (view inChannels)
         --cs  <- gets (view childSet)
