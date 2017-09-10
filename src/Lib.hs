@@ -144,7 +144,7 @@ handleWarningMsg sender warning_color sender_color = do
            then changeColor warning_color sender_color
            else return ()
         -- TODO: figure out why line below doesn't type check.
-        --is_neighbor_warning <- gets ((==) <$> (view localColor) <*> warning_color)
+        --is_neighbor_warning <- gets (\ps -> pure (== warning_color) <*> (view localColor ps))
         lc <- gets (view localColor)
         if lc /= warning_color
            -- We were sent a warning message by a process in a neighboring region, so add its master process to the border set.
