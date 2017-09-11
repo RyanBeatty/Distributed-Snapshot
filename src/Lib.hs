@@ -171,9 +171,10 @@ handleWarningMsg sender warning_color sender_color = do
                    info_bundle <- gets (makeInfoBundle <$> (view recStateInfo) <*> (view idBorderSet) <*> (view idColor))
                    let ib = StateBundle { _stateBundleStateInfos=[info_bundle] }
                    modify (set stateBundle ib)
+                   -- Send a data message containing the state bundle.
                    gets (makeDataLetter <$> (view idColor) <*> (view parentColor) <*> (view stateBundle)) >>= tell . pure 
+                   -- Send a done message telling the parent that this process is done.
                    gets (makeDoneLetter <$> (view idColor) <*> (view parentColor) <*> (view idColor)) >>= tell. pure
-                   return ()
            else return ()
 
 -- Add the color of the new child to this processes' childSet.
