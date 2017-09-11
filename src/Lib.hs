@@ -52,7 +52,11 @@ data Message p =
                , _messageSenderColor  :: p -- The color of the process that sent this warning message.
                }
   | ChildMsg { _messageChildColor :: p -- The color of the child process.
-             } 
+             }
+  | DataMsg { _messageStateBundle :: StateBundle p
+            }
+  | DoneMsg { _messageMyColor :: p
+            } 
   deriving (Show, Eq)
 makeFields ''Message
 
