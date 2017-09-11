@@ -147,6 +147,7 @@ handleWarningMsg sender warning_color sender_color = do
            -- If this process is not apart of a snapshot, change its color to signal that it is in the current snapshot.
            then changeColor warning_color sender_color
            else return ()
+        -- Check if the warning message was sent by a node in a different region.
         is_neighbor_warning <- gets ((/=) warning_color . view localColor)
         if is_neighbor_warning
            -- We were sent a warning message by a process in a neighboring region, so add its master process to the border set.
@@ -154,7 +155,9 @@ handleWarningMsg sender warning_color sender_color = do
            else return ()
         -- Signal that we have received a warning from the process.
         modify . over warningRecSet . mappend . S.singleton $ sender_color
+        -- Check if we have received a warning message from all incoming channels.
         received_all_warnings <- gets ((==) <$> (view warningRecSet) <*> (S.fromList . view inChannels))
+        -- Check if this process is a child process.
         is_leaf_process <- gets ((==) mempty . view childSet)
         if received_all_warnings && is_leaf_process
            then return ()
