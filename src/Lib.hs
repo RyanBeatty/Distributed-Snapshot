@@ -178,6 +178,12 @@ makeChildMsg sender recipient child_color = makeLetter sender recipient (ChildMs
 makeWarningMsg :: (ProcessId p) => p -> p -> p -> p -> Letter p
 makeWarningMsg sender recipient warning_color sender_color = makeLetter sender recipient (WarningMsg { _messageMasterColor=warning_color, _messageSenderColor=sender_color })
 
+makeDataLetter :: (ProcessId p) => p -> p -> StateBundle p -> Letter p
+makeDataLetter sender recipient state_bundle = makeLetter sender recipient (DataMsg { _messageStateBundle=state_bundle })
+
+makeDoneLetter :: (ProcessId p) => p -> p -> p -> Letter p
+makeDoneLetter sender recipient id_color = makeLetter sender recipient (DoneMsg { _messageMyColor=id_color })
+
 makeSnapshotInfo :: (ProcessId p) => p -> Count -> Count -> p -> p -> SnapshotInfo p
 makeSnapshotInfo id_color op_count snapshot_count warning_color parent_color = SnapshotInfo { _snapshotInfoIdColor=id_color, _snapshotInfoOpCount=op_count, _snapshotInfoSnapshotCount=snapshot_count, _snapshotInfoWarningColor=warning_color, _snapshotInfoParentColor=parent_color }
 
