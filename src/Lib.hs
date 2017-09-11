@@ -47,7 +47,7 @@ makeFields ''InfoBundle
 
 -- A StateBundle is a collection of StateInfos from various processes. Child processes accumulate and send their
 -- bundles to their master processes which build the snapshots.
-newtype StateBundle p = StateBundle { _stateBundleStateInfos :: [StateInfo p] }
+newtype StateBundle p = StateBundle { _stateBundleStateInfos :: [InfoBundle p] }
         deriving (Show, Eq, Monoid)
 makeFields ''StateBundle
 
@@ -94,6 +94,7 @@ data ProcessState p = ProcessState { _processStateIdColor       :: p       -- Th
                                    , _processStateWarningRecSet :: S.Set p -- Set of processes that have sent a warning to this process.
                                    , _processStateIdBorderSet   :: S.Set p -- Set of process ids that belong to neighboring master initiator processes.
                                    , _processStateChildSet      :: S.Set p -- Set of all child process of this process.
+                                   , _processStateRecStateInfo  :: StateInfo p
                                    , _processStateStateBundle   :: StateBundle p
                                    }
   deriving (Show, Eq)
@@ -143,8 +144,7 @@ takeSnapshot :: (ProcessId p) => p -> ProcessAction p ()
 takeSnapshot warning_color = do
         ps <- get
         let snapshot = makeStateInfo (ps^.idColor) (ps^.opCount) (ps^.snapshotCount) warning_color (ps^.parentColor)
-            -- TODO: fix this ad hoc creation of a StateBundle. Its really ugly. 
-         in modify (set stateBundle $ StateBundle { _stateBundleStateInfos=[snapshot] })
+         in modify (set recStateInfo snapshot)
 
 handleWarningMsg :: (ProcessId p) => p -> p -> p -> ProcessAction p ()
 handleWarningMsg sender warning_color sender_color = do
