@@ -39,9 +39,6 @@ data Message p =
   deriving (Show, Eq)
 makeFields ''Message
 
-data ProcessConfig = ProcessConfig
-  deriving (Show, Eq)
-
 -- A Letter contains a Message to send and the necessary info to be able to
 -- actually send the message to a process.
 -- Type Parameters:
@@ -69,6 +66,9 @@ makeFields ''SnapshotInfo
 newtype StateBundle p = StateBundle { _stateBundleSnapshotInfos :: [SnapshotInfo p] }
         deriving (Show, Eq, Monoid)
 makeFields ''StateBundle
+
+data ProcessConfig = ProcessConfig
+  deriving (Show, Eq)
 
 -- The state of a Process.
 -- Type Parameters:
