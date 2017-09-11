@@ -27,20 +27,27 @@ newtype Count = Count { _countGetCount :: Integer }
         deriving (Show, Eq, Ord, Num, Enum)
 makeFields ''Count
 
--- A SnapshotInfo contains all of the local state information of a process that is needed
+-- A StateInfo contains all of the local state information of a process that is needed
 -- to build the snapshot by master process of a snapshot.
-data SnapshotInfo p = SnapshotInfo { _snapshotInfoIdColor :: p            -- The color of the process this SnapshotInfo is for.
-                                   , _snapshotInfoOpCount :: Count        -- The operation count of the process.
-                                   , _snapshotInfoSnapshotCount :: Count  -- The number of snapshots this process has been in.
-                                   , _snapshotInfoWarningColor :: p       -- The color of the initiator of the snapshot this process is in.
-                                   , _snapshotInfoParentColor :: p        -- The parent color of this process.
-                                   }
+data StateInfo p = StateInfo { _stateInfoIdColor :: p            -- The color of the process this StateInfo is for.
+                             , _stateInfoOpCount :: Count        -- The operation count of the process.
+                             , _stateInfoSnapshotCount :: Count  -- The number of snapshots this process has been in.
+                             , _stateInfoWarningColor :: p       -- The color of the initiator of the snapshot this process is in.
+                             , _stateInfoParentColor :: p        -- The parent color of this process.
+                             }
   deriving (Show, Eq)
-makeFields ''SnapshotInfo
+makeFields ''StateInfo
 
--- A StateBundle is a collection of SnapshotInfos from various processes. Child processes accumulate and send their
+data InfoBundle p = InfoBundle { _infoBundleStateInfo :: StateInfo p
+                               , _infoBundleIdBorderSet :: S.Set p
+                               , _infoBundleIdColor :: p
+                               }
+  deriving (Show, Eq)
+makeFields ''InfoBundle
+
+-- A StateBundle is a collection of StateInfos from various processes. Child processes accumulate and send their
 -- bundles to their master processes which build the snapshots.
-newtype StateBundle p = StateBundle { _stateBundleSnapshotInfos :: [SnapshotInfo p] }
+newtype StateBundle p = StateBundle { _stateBundleStateInfos :: [StateInfo p] }
         deriving (Show, Eq, Monoid)
 makeFields ''StateBundle
 
@@ -135,15 +142,15 @@ changeColor warning_color sender_color = do
 takeSnapshot :: (ProcessId p) => p -> ProcessAction p ()
 takeSnapshot warning_color = do
         ps <- get
-        let snapshot = makeSnapshotInfo (ps^.idColor) (ps^.opCount) (ps^.snapshotCount) warning_color (ps^.parentColor)
+        let snapshot = makeStateInfo (ps^.idColor) (ps^.opCount) (ps^.snapshotCount) warning_color (ps^.parentColor)
             -- TODO: fix this ad hoc creation of a StateBundle. Its really ugly. 
-         in modify (set stateBundle $ StateBundle { _stateBundleSnapshotInfos=[snapshot] })
+         in modify (set stateBundle $ StateBundle { _stateBundleStateInfos=[snapshot] })
 
 handleWarningMsg :: (ProcessId p) => p -> p -> p -> ProcessAction p ()
 handleWarningMsg sender warning_color sender_color = do
         -- Check if this process is currently involved in a snapshot.
-        not_in_snapshot <- gets (isWhiteId . view localColor)
-        if not_in_snapshot
+        not_in_state <- gets (isWhiteId . view localColor)
+        if not_in_state
            -- If this process is not apart of a snapshot, change its color to signal that it is in the current snapshot.
            then changeColor warning_color sender_color
            else return ()
@@ -184,8 +191,8 @@ makeDataLetter sender recipient state_bundle = makeLetter sender recipient (Data
 makeDoneLetter :: (ProcessId p) => p -> p -> p -> Letter p
 makeDoneLetter sender recipient id_color = makeLetter sender recipient (DoneMsg { _messageMyColor=id_color })
 
-makeSnapshotInfo :: (ProcessId p) => p -> Count -> Count -> p -> p -> SnapshotInfo p
-makeSnapshotInfo id_color op_count snapshot_count warning_color parent_color = SnapshotInfo { _snapshotInfoIdColor=id_color, _snapshotInfoOpCount=op_count, _snapshotInfoSnapshotCount=snapshot_count, _snapshotInfoWarningColor=warning_color, _snapshotInfoParentColor=parent_color }
+makeStateInfo :: (ProcessId p) => p -> Count -> Count -> p -> p -> StateInfo p
+makeStateInfo id_color op_count snapshot_count warning_color parent_color = StateInfo { _stateInfoIdColor=id_color, _stateInfoOpCount=op_count, _stateInfoSnapshotCount=snapshot_count, _stateInfoWarningColor=warning_color, _stateInfoParentColor=parent_color }
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
