@@ -27,11 +27,28 @@ newtype Count = Count { _countGetCount :: Integer }
         deriving (Show, Eq, Ord, Num, Enum)
 makeFields ''Count
 
+-- A SnapshotInfo contains all of the local state information of a process that is needed
+-- to build the snapshot by master process of a snapshot.
+data SnapshotInfo p = SnapshotInfo { _snapshotInfoIdColor :: p            -- The color of the process this SnapshotInfo is for.
+                                   , _snapshotInfoOpCount :: Count        -- The operation count of the process.
+                                   , _snapshotInfoSnapshotCount :: Count  -- The number of snapshots this process has been in.
+                                   , _snapshotInfoWarningColor :: p       -- The color of the initiator of the snapshot this process is in.
+                                   , _snapshotInfoParentColor :: p        -- The parent color of this process.
+                                   }
+  deriving (Show, Eq)
+makeFields ''SnapshotInfo
+
+-- A StateBundle is a collection of SnapshotInfos from various processes. Child processes accumulate and send their
+-- bundles to their master processes which build the snapshots.
+newtype StateBundle p = StateBundle { _stateBundleSnapshotInfos :: [SnapshotInfo p] }
+        deriving (Show, Eq, Monoid)
+makeFields ''StateBundle
+
 -- Type Parameters:
 -- ProcessId p
 data Message p = 
         -- A warning message is sent to alert processes that a snapshot has begun.
-    WarningMsg { _messageWarningColor :: p -- The color of the initiator of the current snapshot.
+    WarningMsg { _messageMasterColor :: p -- The color of the initiator of the current snapshot.
                , _messageSenderColor  :: p -- The color of the process that sent this warning message.
                }
   | ChildMsg { _messageChildColor :: p -- The color of the child process.
@@ -49,23 +66,6 @@ data Letter p = Letter { _letterSenderOf    :: p -- The sender process of this m
                        } 
   deriving (Show, Eq)
 makeFields ''Letter
-
--- A SnapshotInfo contains all of the local state information of a process that is needed
--- to build the snapshot by master process of a snapshot.
-data SnapshotInfo p = SnapshotInfo { _snapshotInfoIdColor :: p            -- The color of the process this SnapshotInfo is for.
-                                   , _snapshotInfoOpCount :: Count        -- The operation count of the process.
-                                   , _snapshotInfoSnapshotCount :: Count  -- The number of snapshots this process has been in.
-                                   , _snapshotInfoWarningColor :: p       -- The color of the initiator of the snapshot this process is in.
-                                   , _snapshotInfoParentColor :: p        -- The parent color of this process.
-                                   }
-  deriving (Show, Eq)
-makeFields ''SnapshotInfo
-
--- A StateBundle is a collection of SnapshotInfos from various processes. Child processes accumulate and send their
--- bundles to their master processes which build the snapshots.
-newtype StateBundle p = StateBundle { _stateBundleSnapshotInfos :: [SnapshotInfo p] }
-        deriving (Show, Eq, Monoid)
-makeFields ''StateBundle
 
 data ProcessConfig = ProcessConfig
   deriving (Show, Eq)
@@ -96,7 +96,7 @@ newtype ProcessAction p x = ProcessAction { runAction :: RWS ProcessConfig [Lett
 msgHandler :: (ProcessId p) => Letter p -> ProcessAction p ()
 msgHandler letter =
         case letter^.msg of
-          WarningMsg { _messageWarningColor=warning_color, _messageSenderColor=sender_color } -> handleWarningMsg (letter^.senderOf) warning_color sender_color
+          WarningMsg { _messageMasterColor=warning_color, _messageSenderColor=sender_color } -> handleWarningMsg (letter^.senderOf) warning_color sender_color
           ChildMsg { _messageChildColor=child_color } -> handleChildMsg child_color
 
 -- When a process gets its first warning message or wants to initiate a snapshot it will call this function.
@@ -172,7 +172,7 @@ makeChildMsg :: (ProcessId p) => p -> p -> p -> Letter p
 makeChildMsg sender recipient child_color = makeLetter sender recipient (ChildMsg { _messageChildColor=child_color })
 
 makeWarningMsg :: (ProcessId p) => p -> p -> p -> p -> Letter p
-makeWarningMsg sender recipient warning_color sender_color = makeLetter sender recipient (WarningMsg { _messageWarningColor=warning_color, _messageSenderColor=sender_color })
+makeWarningMsg sender recipient warning_color sender_color = makeLetter sender recipient (WarningMsg { _messageMasterColor=warning_color, _messageSenderColor=sender_color })
 
 makeSnapshotInfo :: (ProcessId p) => p -> Count -> Count -> p -> p -> SnapshotInfo p
 makeSnapshotInfo id_color op_count snapshot_count warning_color parent_color = SnapshotInfo { _snapshotInfoIdColor=id_color, _snapshotInfoOpCount=op_count, _snapshotInfoSnapshotCount=snapshot_count, _snapshotInfoWarningColor=warning_color, _snapshotInfoParentColor=parent_color }
