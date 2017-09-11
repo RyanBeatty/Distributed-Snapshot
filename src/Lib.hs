@@ -169,6 +169,13 @@ handleWarningMsg sender warning_color sender_color = do
         if received_all_warnings && is_leaf_process
            then do
                    info_bundle <- gets (makeInfoBundle <$> (view recStateInfo) <*> (view idBorderSet) <*> (view idColor))
+                   let ib = StateBundle { _stateBundleStateInfos=[info_bundle] }
+                   modify (set stateBundle ib)
+                   sb <- gets (view stateBundle)
+                   idc <- gets (view idColor)
+                   p   <- gets (view parentColor)
+                   tell . pure $ makeDataLetter idc p sb
+                   tell . pure $ makeDoneLetter idc p idc
                    return ()
            else return ()
 
