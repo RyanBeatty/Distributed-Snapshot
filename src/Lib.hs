@@ -154,10 +154,9 @@ handleWarningMsg sender warning_color sender_color = do
            else return ()
         -- Signal that we have received a warning from the process.
         modify . over warningRecSet . mappend . S.singleton $ sender_color
-        wrc <- gets (view warningRecSet)
-        ic  <- gets (view inChannels)
-        cs  <- gets (view childSet)
-        if wrc == S.fromList ic && cs == mempty 
+        received_all_warnings <- gets ((==) <$> (view warningRecSet) <*> (S.fromList . view inChannels))
+        is_leaf_process <- gets ((==) mempty . view childSet)
+        if received_all_warnings && is_leaf_process
            then return ()
            else return ()
 
