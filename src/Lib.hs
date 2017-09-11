@@ -167,7 +167,9 @@ handleWarningMsg sender warning_color sender_color = do
         -- Check if this process is a child process.
         is_leaf_process <- gets ((==) mempty . view childSet)
         if received_all_warnings && is_leaf_process
-           then return ()
+           then do
+                   info_bundle <- gets (makeInfoBundle <$> (view recStateInfo) <*> (view idBorderSet) <*> (view idColor))
+                   return ()
            else return ()
 
 -- Add the color of the new child to this processes' childSet.
@@ -193,6 +195,9 @@ makeDoneLetter sender recipient id_color = makeLetter sender recipient (DoneMsg 
 
 makeStateInfo :: (ProcessId p) => p -> Count -> Count -> p -> p -> StateInfo p
 makeStateInfo id_color op_count snapshot_count warning_color parent_color = StateInfo { _stateInfoIdColor=id_color, _stateInfoOpCount=op_count, _stateInfoSnapshotCount=snapshot_count, _stateInfoWarningColor=warning_color, _stateInfoParentColor=parent_color }
+
+makeInfoBundle :: (ProcessId p) => StateInfo p -> S.Set p -> p -> InfoBundle p
+makeInfoBundle state_info id_border_set id_color = InfoBundle { _infoBundleStateInfo=state_info, _infoBundleIdBorderSet=id_border_set, _infoBundleIdColor=id_color }
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"
